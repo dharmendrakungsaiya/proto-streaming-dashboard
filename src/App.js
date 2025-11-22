@@ -2,12 +2,14 @@ import React, { useRef } from 'react';
 import { VideoPlayer } from './VideoPlayer';
 import './App.css';
 
+const REMOTE_URL = "https://nonofficially-unflaked-suk.ngrok-free.dev";
+
 const STREAMS = [
-  "http://localhost:4000/hls/stream1.m3u8",
-  "http://localhost:4000/hls/stream2.m3u8",
-  "http://localhost:4000/hls/stream3.m3u8",
-  "http://localhost:4000/hls/stream4.m3u8",
-  "http://localhost:4000/hls/stream5.m3u8",
+  `${REMOTE_URL}/hls/stream1.m3u8`,
+  `${REMOTE_URL}/hls/stream2.m3u8`,
+  `${REMOTE_URL}/hls/stream3.m3u8`,
+  `${REMOTE_URL}/hls/stream4.m3u8`,
+  `${REMOTE_URL}/hls/stream5.m3u8`,
 ];
 
 function App() {
