@@ -115,7 +115,7 @@ The assignment asks for a live Vercel link. However, Vercel **cannot** run `stre
 **The Solution for Submission:**
 1.  **Deploy the Frontend to Vercel:**
     * Go to Vercel.com -> "Add New Project" -> Import from GitHub.
-    * Deploy it. You will get a link like `https://proto-dashboard.vercel.app`.
+    * Deploy it. You will get a link like `https://proto-streaming-dashboard.vercel.app/`.
 2.  **The Note:**
     * When you submit the assignment email, you must include this note:
     > *"The frontend is deployed on Vercel (link below). However, because the backend requires real-time FFmpeg transcoding which Vercel does not support, the video streams will only play if the backend server is running locally or tunneled. Please refer to the README for local setup instructions to see the full synchronization in action."*
