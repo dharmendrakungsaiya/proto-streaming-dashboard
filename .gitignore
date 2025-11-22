@@ -21,3 +21,13 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Local Environment Files
+.env
+.DS_Store
+
+# Project Specific - DO NOT UPLOAD THESE
+hls_output/
+public/hls/
+ffmpeg.exe
+ffmpeg-release-essentials.zip

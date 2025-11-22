@@ -1,70 +1,124 @@
-# Getting Started with Create React App
+# Synchronized Multi-Stream Video Dashboard
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project is a React-based video dashboard capable of displaying and synchronizing 5 distinct HLS video streams simultaneously. It was built as a technical assessment for Proto Corp.
 
-## Available Scripts
+## ⚠️ Important Note on Data Source
+The assignment provided an RTSP source (`rtsp://13.60.76.79:8554/live`). During development, this source was found to be unreachable/offline. To ensure the assignment deliverables—specifically the **HLS generation pipeline** and **multi-stream synchronization logic**—could be demonstrated effectively, I implemented a simulated source using FFmpeg's `testsrc` (Test Pattern). This generates a live, precision clock and color bars, which serves as a perfect visual reference to verify synchronization.
 
-In the project directory, you can run:
+## 🚀 Features
+* **HLS Generation:** Converts raw video input into HTTP Live Streaming (HLS) format in real-time.
+* **Multi-Stream Simulation:** Simulates 5 unique streams from a single source.
+* **Grid Layout:** Responsive 2x3 grid layout.
+* **Synchronization:** Custom "Soft Sync" logic to keep all players aligned within milliseconds.
 
-### `npm start`
+## 🛠️ Technical Implementation
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 1. RTSP/Video to HLS Conversion
+**Tool Used:** FFmpeg (via Node.js `child_process`)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+To satisfy the requirement of converting a stream to HLS, a custom Node.js backend (`stream-server.js`) is used. It spawns an FFmpeg process that ingests the source video and outputs `.m3u8` playlists and `.ts` video segments.
 
-### `npm test`
+**Key FFmpeg Flags Used:**
+* `-f hls`: Formats the output as HLS.
+* `-hls_time 2`: Sets segment length to 2 seconds (optimizing for lower latency).
+* `-hls_list_size 3`: Keeps the playlist small (only the last 3 segments) to emulate a live window.
+* `-preset ultrafast` & `-tune zerolatency`: Ensures the transcoding happens in real-time without buffering lag.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 2. Simulating 5 Distinct Streams
+**Requirement:** Create 5 to 6 distinct HLS URLs from a single source.
 
-### `npm run build`
+Instead of running 5 heavy FFmpeg processes, I utilized the FFmpeg `filter_complex` system to split the input signal into 5 separate output references (`[v1]` through `[v5]`).
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```bash
+# Conceptual command logic
+ffmpeg -i INPUT \
+-filter_complex "[0:v]split=5[v1][v2][v3][v4][v5]" \
+-map "[v1]" ... /hls/stream1.m3u8 \
+-map "[v2]" ... /hls/stream2.m3u8 \
+...
+This results in 5 independent HLS playlists (stream1.m3u8 to stream5.m3u8) being generated in the hls_output directory, effectively simulating a multi-camera environment.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+3. Synchronization Logic (React)
+Goal: Ensure 5 streams play "in sync".
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+I implemented a Master-Slave Synchronization Strategy within the React App.js component.
 
-### `npm run eject`
+The Master: The first player (Stream 1) acts as the reference clock.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+The Slaves: Streams 2-5 monitor the Master's currentTime.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+The Logic: On every timeupdate event from the Master:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+We calculate the diff (drift) between the Slave and Master.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Soft Sync (0.2s < diff < 2.0s): If a slave drifts slightly, we do not seek (which causes stutter). Instead, we adjust the playbackRate.
 
-## Learn More
+Slave Ahead: Speed = 0.9x
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Slave Behind: Speed = 1.1x
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Hard Sync (diff > 2.0s): If major lag occurs, we force a hard seek: slave.currentTime(masterTime).
 
-### Code Splitting
+📦 Setup & Installation
+Prerequisites
+Node.js (v14+)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+FFmpeg (Installed and added to System PATH)
 
-### Analyzing the Bundle Size
+Step 1: Clone and Install
+Bash
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+git clone <your-repo-link>
+cd proto-dashboard
+npm install
+Step 2: Start the Media Server (Backend)
+This starts the FFmpeg process and serves the HLS files on Port 4000.
 
-### Making a Progressive Web App
+Bash
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+node stream-server.js
+Wait approx. 10 seconds for the initial segments to generate.
 
-### Advanced Configuration
+Step 3: Start the Dashboard (Frontend)
+Open a new terminal window:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+Bash
 
-### Deployment
+npm start
+The dashboard will launch at http://localhost:3000.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+🌐 Architecture
+Backend (Port 4000): Node.js + Express + FFmpeg. Serves static HLS files.
 
-### `npm run build` fails to minify
+Frontend (Port 3000): React + Video.js. Consumes streams from Port 4000.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+***
+
+### Part 2: GitHub Submission [cite: 24, 25]
+1.  Create a new repository on GitHub named `proto-streaming-dashboard`.
+2.  Run these commands in your VS Code terminal:
+    ```bash
+    git init
+    git add .
+    git commit -m "Initial submission"
+    git branch -M main
+    git remote add origin https://github.com/<YOUR_USERNAME>/proto-streaming-dashboard.git
+    git push -u origin main
+    ```
+
+### Part 3: The "Live Link" (Vercel/Netlify) [cite: 33, 34, 35]
+
+**The Challenge:**
+The assignment asks for a live Vercel link. However, Vercel **cannot** run `stream-server.js` or FFmpeg. It only hosts the React frontend.
+
+**The Solution for Submission:**
+1.  **Deploy the Frontend to Vercel:**
+    * Go to Vercel.com -> "Add New Project" -> Import from GitHub.
+    * Deploy it. You will get a link like `https://proto-dashboard.vercel.app`.
+2.  **The Note:**
+    * When you submit the assignment email, you must include this note:
+    > *"The frontend is deployed on Vercel (link below). However, because the backend requires real-time FFmpeg transcoding which Vercel does not support, the video streams will only play if the backend server is running locally or tunneled. Please refer to the README for local setup instructions to see the full synchronization in action."*
+
+**Why this is acceptable:**
+Technical recruiters understand that HLS generation requires a specialized media server (o
