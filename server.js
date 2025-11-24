@@ -1,11 +1,10 @@
-// server.js
 const express = require("express");
 const { spawn } = require("child_process");
 const ngrok = require("@ngrok/ngrok");
 const path = require("path");
 const fs = require("fs");
 
-const RTSP_URL = "rtsp://13.60.76.79:8554/live2"; 
+const RTSP_URL = "rtsp://13.60.76.79:8554/live2";
 const HLS_DIR = path.join(__dirname, "hls");
 const PORT = process.env.PORT || 4000;
 const NUM_STREAMS = 6;
