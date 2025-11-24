@@ -6,31 +6,37 @@ export const VideoPlayer = ({ src, onPlayerReady, options }) => {
   const videoRef = useRef(null);
   const playerRef = useRef(null);
 
+  // Initialize player or update source
   useEffect(() => {
-    if (!playerRef.current) {
+    let player = playerRef.current;
+
+    if (!player) {
       const videoElement = document.createElement("video-js");
-      videoElement.classList.add('vjs-big-play-centered');
-      videoRef.current.appendChild(videoElement);
+      videoElement.classList.add("vjs-big-play-centered");
 
-      const player = playerRef.current = videojs(videoElement, {
-        ...options,
-        sources: [{ src, type: 'application/x-mpegURL' }]
-      }, () => {
-        onPlayerReady && onPlayerReady(player);
-      });
+      if (videoRef.current) {
+        videoRef.current.appendChild(videoElement);
+      }
+
+      player = playerRef.current = videojs(
+        videoElement,
+        { ...options, sources: [{ src, type: "application/x-mpegURL" }] },
+        () => {
+          onPlayerReady && onPlayerReady(player);
+        }
+      );
     } else {
-        
-       const player = playerRef.current;
-       player.src({ src, type: 'application/x-mpegURL' });
+      player.src({ src, type: "application/x-mpegURL" });
     }
-  }, [options, videoRef, src, onPlayerReady]);
+  }, [src, options, onPlayerReady]);
 
-  
+  // Cleanup
   useEffect(() => {
+    const savedPlayer = playerRef.current;
+
     return () => {
-      if (playerRef.current && !playerRef.current.isDisposed()) {
-        playerRef.current.dispose();
-        playerRef.current = null;
+      if (savedPlayer && !savedPlayer.isDisposed()) {
+        savedPlayer.dispose();
       }
     };
   }, []);
@@ -40,4 +46,4 @@ export const VideoPlayer = ({ src, onPlayerReady, options }) => {
       <div ref={videoRef} />
     </div>
   );
-}
+};
